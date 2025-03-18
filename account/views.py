@@ -228,53 +228,50 @@ class SignOutView(LoginRequiredMixin, generic.View):
         messages.success(request, 'You are sign out successfully!')
         return redirect('sign')
     
-@method_decorator(never_cache, name='dispatch')
 class ChangesPasswordView(LoginRequiredMixin, generic.View):
     def get(self, request):
         return render(request, 'account/changes-password.html')
 
     def post(self, request):
-        if request.user.is_authenticated:
-            if request.method == "POST":
-                try:
-                    data = json.loads(request.body)
-                    current_password = data.get('current_password', '').strip()
-                    password = data.get('password', '').strip()
-                    password2 = data.get('password2', '').strip()
-                    
-                    if password != password2:
-                        return JsonResponse({'status': 400, 'messages': 'Passwords do not match.'})
+        if request.method == "POST":
+            try:
+                data = json.loads(request.body)
+                current_password = data.get('current_password', '').strip()
+                password = data.get('password', '').strip()
+                password2 = data.get('password2', '').strip()
+                
+                if password != password2:
+                    return JsonResponse({'status': 400, 'messages': 'Passwords do not match.'})
 
-                    # Validate password strength using Django's built-in validators
-                    # try:
-                    #     if not validate_password(password):
-                    #         return JsonResponse({'status': 400, 'messages': 'Password must be at least 8 characters long.'})
-                    # except ValidationError as e:
-                    #     return JsonResponse({'status': 400, 'messages': str(e.messages)})  
+                # Validate password strength using Django's built-in validators
+                # try:
+                #     if not validate_password(password):
+                #         return JsonResponse({'status': 400, 'messages': 'Password must be at least 8 characters long.'})
+                # except ValidationError as e:
+                #     return JsonResponse({'status': 400, 'messages': str(e.messages)})  
 
-                    # Retrieve user
-                    user = get_object_or_404(User, id=request.user.id)
-                    # Check current password
-                    check_current_password = user.check_password(current_password)
-                    if check_current_password == True:
-                        # Change password and update session
-                        user.set_password(password)
-                        user.save()
-                        # Keeps the user logged in after password change
-                        update_session_auth_hash(request, user)  
-                        # messages.success(request, 'Your password changes successfully !')
-                        return JsonResponse({'status': 200, 'messages': 'Your password changes successfully !'})
-                    else:
-                        # messages.error(request, 'Your current password is incorrect!')
-                        return JsonResponse({'status': 400, 'messages': 'Your current password is incorrect!'})
-                except json.JSONDecodeError:
-                    return JsonResponse({'status': 400, 'messages': 'Invalid JSON format!'})
+                # Retrieve user
+                user = get_object_or_404(User, id=request.user.id)
+                # Check current password
+                check_current_password = user.check_password(current_password)
+                if check_current_password == True:
+                    # Change password and update session
+                    user.set_password(password)
+                    user.save()
+                    # Keeps the user logged in after password change
+                    update_session_auth_hash(request, user)  
+                    # messages.success(request, 'Your password changes successfully !')
+                    return JsonResponse({'status': 200, 'messages': 'Your password changes successfully !'})
+                else:
+                    # messages.error(request, 'Your current password is incorrect!')
+                    return JsonResponse({'status': 400, 'messages': 'Your current password is incorrect!'})
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 400, 'messages': 'Invalid JSON format!'})
 
-                except Exception as e:
-                    return JsonResponse({'status': 500, 'messages': f'Something went wrong: {str(e)}'})
-        else:
-            return JsonResponse({'status': 400, 'messages': 'You are not logged in!'})
+            except Exception as e:
+                return JsonResponse({'status': 400, 'messages': f'Something went wrong: {str(e)}'})
         return render(request, 'account/changes-password.html')
+  
   
 @method_decorator(never_cache, name='dispatch')    
 class SendOTPView(LogoutRequiredMixin, generic.View):
